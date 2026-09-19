@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tile Studio — Photo Mode</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.mode-toggle-btn.unavailable{opacity:.45;cursor:not-allowed;position:relative}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand"><a href="index.html" class="brand-link">Tile Studio</a><span>photo mode — real photo, real edits</span></div>
+  <div class="mode-toggle" id="visModeToggle">
+    <button class="mode-toggle-btn active" data-vismode="local" type="button">Non-AI Mode</button>
+    <button class="mode-toggle-btn unavailable" id="aiUnavailable" type="button">AI Mode</button>
+  </div>
+  <button class="mode-switch-link" id="threeDUnavailable" type="button">Switch to 3D mode →</button>
+</div>
+<div class="layout">
+  <div class="mode-pane" id="localModePane">
+    <div class="sidebar" id="localSidebar"></div>
+    <div class="viewport-wrap photo-viewport">
+      <div id="localStage" class="photo-stage">
+        <div id="localEmptyState" class="photo-empty">Choose a photo to get started →</div>
+        <canvas id="localCanvas" hidden></canvas>
+        <div id="localLoading" class="modal-loading photo-loading" hidden><div class="spinner"></div><div id="localLoadingText">Processing…</div></div>
+      </div>
+      <div id="localErrorBanner" class="modal-error photo-error-banner" hidden></div>
+    </div>
+  </div>
+</div>
+<input type="file" id="localUploadInput" accept="image/png,image/jpeg" hidden>
+<script>
+const PRESETS=[
+ {id:'living-room',name:'Living room',url:'assets/presets/living-room.jpg'},
+ {id:'bathroom',name:'Bathroom',url:'assets/presets/bathroom.jpg'},
+ {id:'bedroom',name:'Bedroom',url:'assets/presets/bedroom.jpg'}
+];
+const aiUnavailable=document.getElementById('aiUnavailable');
+aiUnavailable.addEventListener('click',()=>alert('AI Mode is currently unavailable.'));
+document.getElementById('threeDUnavailable').addEventListener('click',()=>alert('3D Mode is currently unavailable.'));
+</script>
+<script src="js/textures.js"></script>
+<script src="js/tiles.js"></script>
+<script src="js/perspective.js"></script>
+<script src="js/room-geometry.js"></script>
+<script src="js/local-tile.js"></script>
+<script src="js/photo-mode-local.js"></script>
+</body>
+</html>

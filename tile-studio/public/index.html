@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tile Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.unavailable-card{cursor:not-allowed;position:relative}
+.unavailable-card .mode-card-media,.unavailable-card .mode-card-body{opacity:.62}
+.unavailable-badge{position:absolute;top:18px;right:18px;background:#171717;color:#fff;border-radius:999px;padding:8px 12px;font:600 12px Inter,sans-serif;z-index:2}
+</style>
+</head>
+<body class="home-body">
+<div class="home-wrap">
+  <div class="home-head">
+    <div class="brand">Tile Studio</div>
+    <div class="home-sub">Pick how you want to try tiles on for size.</div>
+  </div>
+  <div class="mode-grid">
+    <a class="mode-card" href="photo.html">
+      <div class="mode-card-media mode-card-media-photo"><span class="mode-card-tag">Photo Mode</span></div>
+      <div class="mode-card-body">
+        <h2>One real photo, tiles swapped in</h2>
+        <p>Start from a real room photo — a preset or your own upload — and change just the floor or wall material. Everything else in the photo stays exactly the same.</p>
+        <span class="mode-card-cta">Start with a photo →</span>
+      </div>
+    </a>
+    <div class="mode-card unavailable-card" id="unavailable3d">
+      <span class="unavailable-badge">Currently unavailable</span>
+      <div class="mode-card-media mode-card-media-3d"><span class="mode-card-tag">3D Mode</span></div>
+      <div class="mode-card-body">
+        <h2>Full 3D room, live and orbitable</h2>
+        <p>A real-time 3D room you can rotate and re-tile instantly — floor, walls, furniture, tile size, all free to explore.</p>
+        <span class="mode-card-cta">Currently unavailable</span>
+      </div>
+    </div>
+  </div>
+  <div class="home-foot">Both modes share the same tile catalog — procedural materials and real photographed textures alike.</div>
+</div>
+<script>
+document.getElementById('unavailable3d').addEventListener('click',()=>alert('3D Mode is currently unavailable.'));
+</script>
+</body>
+</html>

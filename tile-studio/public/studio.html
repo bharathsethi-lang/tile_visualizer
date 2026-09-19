@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tile Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="topbar">
+    <div class="brand"><a href="index.html" class="brand-link">Tile Studio</a><span>pick a tile, see the room</span></div>
+    <div class="room-tabs" id="roomTabs">
+      <button class="room-tab active" data-room="living">Living room</button>
+      <button class="room-tab" data-room="bathroom">Bathroom</button>
+    </div>
+    <a class="mode-switch-link" href="photo.html">Switch to Photo mode →</a>
+  </div>
+
+  <div class="layout">
+    <div class="sidebar">
+      <div class="section-label">Floor tiles</div>
+      <div class="swatch-grid" id="floorGrid"></div>
+      <div class="slider-row">
+        <label for="floorScale">Tile size</label>
+        <input type="range" id="floorScale" min="0.6" max="1.8" step="0.05" value="1">
+      </div>
+
+      <div class="section-label">Wall tiles</div>
+      <div class="swatch-grid" id="wallGrid"></div>
+      <div class="slider-row">
+        <label for="wallScale">Tile size</label>
+        <input type="range" id="wallScale" min="0.6" max="1.8" step="0.05" value="1">
+      </div>
+
+      <div class="ai-panel">
+        <div class="ai-panel-head">
+          <span class="section-label" style="margin:0;">AI studio</span>
+          <span class="ai-badge">costs a call</span>
+        </div>
+
+        <div class="ai-block">
+          <div class="ai-block-title">Design a custom tile</div>
+          <div class="ai-block-sub">Describe a material — generated once, then usable like any catalog tile.</div>
+          <textarea id="customTilePrompt" rows="2" placeholder="e.g. blush pink zellige tile, hand-glazed, glossy"></textarea>
+          <div class="ai-row">
+            <select id="customTileTarget">
+              <option value="floor">For floor</option>
+              <option value="wall">For wall</option>
+            </select>
+            <button id="generateTileBtn" class="ai-btn">Generate tile</button>
+          </div>
+          <div id="customTileError" class="ai-error" hidden></div>
+        </div>
+
+        <div class="ai-block">
+          <div class="ai-block-title">Generate photoreal render</div>
+          <div class="ai-block-sub">Edits a real base photo of this room with your current tile selection — needs base photos &amp; masks on the server (see README).</div>
+          <button id="photorealBtn" class="ai-btn ai-btn-primary">Generate photoreal render</button>
+          <div id="photorealError" class="ai-error" hidden></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="viewport-wrap">
+      <div id="canvas-holder"></div>
+      <div class="selection-pill"><span><b>Floor</b><span id="floorLabel">—</span></span><span><b>Wall</b><span id="wallLabel">—</span></span></div>
+      <div class="hint">Drag to rotate · Scroll to zoom</div>
+    </div>
+  </div>
+
+  <!-- photoreal render overlay -->
+  <div id="photorealModal" class="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <span>Photoreal render</span>
+        <button id="photorealClose" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="photorealLoading" class="modal-loading" hidden>
+          <div class="spinner"></div>
+          <div id="photorealLoadingText">Generating render…</div>
+        </div>
+        <div id="photorealErrorBanner" class="modal-error" hidden></div>
+        <img id="photorealImage" alt="Photoreal room render" hidden>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/tiles.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/main.js"></script>
+<script src="js/ai.js"></script>
+</body>
+</html>
