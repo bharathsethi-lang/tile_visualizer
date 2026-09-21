@@ -1,4 +1,4 @@
-# Tile Studio
+# Tile Studio 1
 
 Two ways to try tiles on a room, picked from a home screen:
 
