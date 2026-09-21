@@ -35,11 +35,6 @@
 </div>
 <input type="file" id="localUploadInput" accept="image/png,image/jpeg" hidden>
 <script>
-const PRESETS=[
- {id:'living-room',name:'Living room',url:'assets/presets/living-room.jpg'},
- {id:'bathroom',name:'Bathroom',url:'assets/presets/bathroom.jpg'},
- {id:'bedroom',name:'Bedroom',url:'assets/presets/bedroom.jpg'}
-];
 const aiUnavailable=document.getElementById('aiUnavailable');
 aiUnavailable.addEventListener('click',()=>alert('AI Mode is currently unavailable.'));
 document.getElementById('threeDUnavailable').addEventListener('click',()=>alert('3D Mode is currently unavailable.'));

@@ -1,8 +1,7 @@
 /* ============================================================
    photo-mode-local.js — Non-AI Mode page logic (Photo Mode's second pane).
 
-   Entirely local: predefined rooms use the fixed quads in
-   room-geometry.js, custom uploads use an on-page point-tracing tool,
+   Entirely local: uploads use an on-page point-tracing tool;
    and every render goes through local-tile.js's Canvas-based
    perspective compositor. No fetch() to any /api/* route lives in
    this file — nothing here can ever reach Gemini/OpenAI, by
@@ -119,24 +118,135 @@
   // geometry[target].points -> the full paint-region polygon (anchors + any inserted points)
   function polygonOf(geo){ return geo.points.map(p => [p.x, p.y]); }
 
-  /* ---------- step 1: picker (mirrors photo-mode.js's picker UI, own state) ---------- */
+  /* ---------- step 1: picker + paged workflow guide ---------- */
+  const LOCAL_GUIDE_STEPS = [
+    {
+      title: 'Upload photo',
+      text: 'Choose the real room photo you want to edit. You can also start with the sample room below.',
+      image: null
+    },
+    {
+      title: 'Manual mask',
+      text: 'Trace the floor or wall manually. Drag the numbered points and add points around furniture when needed.',
+      image: 'assets/guide/step-2-manual-mask.png'
+    },
+    {
+      title: 'Perspective',
+      text: 'Set the four perspective corners so the tile grid follows the real surface.',
+      image: 'assets/guide/step-3-perspective.png'
+    },
+    {
+      title: 'Tile selection',
+      text: 'Choose a tile and adjust its size, scale, rotation, grout, and strength.',
+      image: 'assets/guide/step-4-tile-selection.png'
+    }
+  ];
+
+  const LOCAL_PRESETS = [
+    {
+      id: 'sample-living-room',
+      name: 'Sample Living Room',
+      url: 'assets/presets/sample-living-room.jpg'
+    }
+  ];
+
+  function openLocalGuide(){
+    let modal = document.getElementById('localGuideModal');
+    if(!modal){
+      modal = document.createElement('div');
+      modal.id = 'localGuideModal';
+      modal.className = 'local-guide-modal';
+      modal.innerHTML = `
+        <div class="local-guide-card" role="dialog" aria-modal="true" aria-labelledby="localGuideTitle">
+          <div class="local-guide-head">
+            <div>
+              <div class="section-label" style="margin:0 0 3px;">Non-AI Photo Mode</div>
+              <h2 id="localGuideTitle">How it works</h2>
+            </div>
+            <button id="localGuideClose" class="modal-close" type="button" aria-label="Close guide">×</button>
+          </div>
+          <div id="localGuideBody" class="local-guide-body"></div>
+          <div class="local-guide-nav">
+            <button id="localGuideBack" class="ai-btn" type="button">← Back</button>
+            <div id="localGuideProgress" class="local-guide-progress"></div>
+            <button id="localGuideNext" class="ai-btn ai-btn-primary" type="button">Next →</button>
+          </div>
+          <div class="local-guide-foot">Everything runs locally in your browser. No AI segmentation is used.</div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      const close = () => { modal.hidden = true; };
+      document.getElementById('localGuideClose').addEventListener('click', close);
+      modal.addEventListener('click', e => { if(e.target === modal) close(); });
+      document.addEventListener('keydown', function onKey(e){
+        if(e.key === 'Escape' && !modal.hidden){ close(); }
+      });
+    }
+
+    let stepIndex = 0;
+    const body = document.getElementById('localGuideBody');
+    const back = document.getElementById('localGuideBack');
+    const next = document.getElementById('localGuideNext');
+    const progress = document.getElementById('localGuideProgress');
+
+    function renderGuideStep(){
+      const step = LOCAL_GUIDE_STEPS[stepIndex];
+      const image = step.image
+        ? `<div class="local-guide-image-wrap"><img class="local-guide-image" src="${step.image}" alt="${step.title} example"></div>`
+        : `<div class="local-guide-upload-visual"><div class="local-guide-upload-icon">↑</div><div><strong>Start with a room photo</strong><span>Upload your own photo or choose the sample room.</span></div></div>`;
+
+      body.innerHTML = `
+        <div class="local-guide-step-title">
+          <div class="local-guide-number">${stepIndex + 1}</div>
+          <div>
+            <div class="local-guide-kicker">STEP ${stepIndex + 1} OF ${LOCAL_GUIDE_STEPS.length}</div>
+            <h3>${step.title}</h3>
+            <p>${step.text}</p>
+          </div>
+        </div>
+        ${image}
+      `;
+
+      back.disabled = stepIndex === 0;
+      next.textContent = stepIndex === LOCAL_GUIDE_STEPS.length - 1 ? 'Done ✓' : 'Next →';
+      progress.innerHTML = LOCAL_GUIDE_STEPS.map((_, i) => `<span class="${i === stepIndex ? 'active' : ''}"></span>`).join('');
+    }
+
+    back.onclick = () => {
+      if(stepIndex > 0){ stepIndex--; renderGuideStep(); }
+    };
+    next.onclick = () => {
+      if(stepIndex < LOCAL_GUIDE_STEPS.length - 1){ stepIndex++; renderGuideStep(); }
+      else modal.hidden = true;
+    };
+
+    modal.hidden = false;
+    renderGuideStep();
+  }
+
   function renderLocalPicker(){
     localSidebar.innerHTML = `
       <div class="section-label" style="margin-top:0;">Choose a room photo</div>
       <div class="preset-grid" id="localPresetGrid"></div>
       <div class="preset-divider">or</div>
-      <button id="localUploadBtn" class="ai-btn ai-btn-primary">Upload your own photo</button>
-      <div class="local-hint">Predefined rooms use built-in floor/wall outlines. An uploaded photo asks you to trace the floor and wall yourself — no AI segmentation, just points you place and drag (and can add more of, to trace around furniture).</div>
+      <button id="localUploadBtn" class="ai-btn ai-btn-primary" style="width:100%;">Upload your own photo</button>
+      <button id="localGuideBtn" class="ai-btn" style="width:100%; margin-top:8px;">Guide — How it works</button>
+      <div class="local-hint">Start with the sample room or upload your own photo. Then manually mask the surface, set perspective, and choose your tile.</div>
     `;
+
     const grid = document.getElementById('localPresetGrid');
-    PRESETS.forEach(p => {
+    LOCAL_PRESETS.forEach(p => {
       const card = document.createElement('button');
+      card.type = 'button';
       card.className = 'preset-card';
       card.innerHTML = `<img src="${p.url}" alt="${p.name}"><span>${p.name}</span>`;
       card.addEventListener('click', () => loadPreset(p));
       grid.appendChild(card);
     });
+
     document.getElementById('localUploadBtn').addEventListener('click', () => localUploadInput.click());
+    document.getElementById('localGuideBtn').addEventListener('click', openLocalGuide);
     showEmptyStage();
     baseImg = null; roomId = null; geometry = { floor: null, wall: null }; selection = { floorId: null, wallId: null };
     controls = { floor: defaultSurfaceControls(), wall: defaultSurfaceControls() };
@@ -145,16 +255,17 @@
   async function loadPreset(preset){
     clearLocalError();
     try{
+      // A preset is only a convenient starting photo. It must follow the
+      // exact same manual mask -> perspective -> tile workflow as an upload.
+      // Do NOT load predefined mask/perspective geometry here.
       baseImg = await loadImageFromSrc(preset.url);
       roomId = preset.id;
-      const geo = ROOM_GEOMETRY[preset.id];
-      geometry = {
-        floor: (geo && geo.floor) ? { points: geo.floor.corners.map(c => ({ x: c[0], y: c[1], anchor: true })) } : null,
-        wall:  (geo && geo.wall)  ? { points: geo.wall.corners.map(c => ({ x: c[0], y: c[1], anchor: true })) }  : null
-      };
+      geometry = { floor: null, wall: null };
       selection = { floorId: null, wallId: null };
-      drawBaseOnly();
-      renderLocalEditSidebar();
+      controls = { floor: defaultSurfaceControls(), wall: defaultSurfaceControls() };
+
+      // Start at the same first step used by a normal uploaded photo.
+      startCornerStep('floor', true);
     } catch(err){
       showLocalError(err.message || 'Could not load that preset.');
     }
@@ -646,7 +757,7 @@
         <div class="section-label">Floor tiles</div>
         <div class="swatch-grid" id="localFloorGrid"></div>
         ${surfaceControlsMarkup('floor', 'Floor', controls.floor)}
-        ${custom ? `<div class="local-btn-row"><button id="floorAdjustPts" class="ai-btn">Adjust floor outline</button><button id="floorPlanePts" class="ai-btn">Perspective grid</button></div>` : ''}
+        <div class="local-btn-row"><button id="floorAdjustPts" class="ai-btn">${custom ? 'Adjust floor outline' : 'Edit floor mask'}</button><button id="floorPlanePts" class="ai-btn">Perspective grid</button></div>
       </div>` : (custom ? `<div class="local-surface-block"><div class="local-hint" style="margin:0 0 8px;">No floor outline defined.</div><button id="floorAddPts" class="ai-btn" style="width:100%;">Trace the floor</button></div>` : `<div class="local-hint">This photo has no floor outline.</div>`)}
 
       ${hasWall ? `
@@ -654,12 +765,12 @@
         <div class="section-label">Wall tiles</div>
         <div class="swatch-grid" id="localWallGrid"></div>
         ${surfaceControlsMarkup('wall', 'Wall', controls.wall)}
-        ${custom ? `<div class="local-btn-row"><button id="wallAdjustPts" class="ai-btn">Adjust wall outline</button><button id="wallPlanePts" class="ai-btn">Perspective grid</button></div>` : ''}
+        <div class="local-btn-row"><button id="wallAdjustPts" class="ai-btn">${custom ? 'Adjust wall outline' : 'Edit wall mask'}</button><button id="wallPlanePts" class="ai-btn">Perspective grid</button></div>
       </div>` : (custom ? `<div class="local-surface-block"><div class="local-hint" style="margin:0 0 8px;">No wall outline defined.</div><button id="wallAddPts" class="ai-btn" style="width:100%;">Trace the wall</button></div>` : `<div class="local-hint">This photo has no wall outline.</div>`)}
 
       <button id="localReset" class="ai-btn" style="width:100%; margin-top:18px;">Reset to original photo</button>
       <button id="localDownload" class="ai-btn ai-btn-primary" style="width:100%; margin-top:8px;">Download result</button>
-      <div class="local-hint">Runs entirely in your browser — perspective-correct tile compositing over the real photo. No AI call, nothing leaves your machine.</div>
+      <div class="local-hint">Runs entirely in your browser. The sample room includes a starting floor mask and perspective plane, and both can be edited before choosing tiles.</div>
     `;
 
     document.getElementById('localBackToPicker').addEventListener('click', renderLocalPicker);

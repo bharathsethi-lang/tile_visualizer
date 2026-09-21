@@ -1,39 +1,39 @@
 /* ============================================================
-   room-geometry.js — Non-AI Mode only.
-   Floor/wall quadrilaterals (in original-image pixel coordinates,
-   corners ordered top-left, top-right, bottom-right, bottom-left)
-   for each predefined preset photo, so predefined rooms don't need
-   the four-point tool — same idea as the server/masks/*.png masks
-   used by studio.html's AI panel, just expressed as polygons instead
-   of painted PNGs since these presets are flat placeholder graphics
-   (see README) rather than real photographed rooms.
-
-   The project ships no server/masks/*.png or corner-coordinate JSON
-   for these three presets, so these quads were measured directly off
-   the actual placeholder images (all three share one 1024x1024
-   layout: a flat "wall" band, a flat "floor" band, a divider line,
-   and a label strip at the bottom).
-
-   Drop in real photos (see README's "About the preset photos") and
-   these corners should be updated to trace the real floor/wall
-   outlines — use the four-point tool on an uploaded copy of the new
-   photo to find good values, then hardcode them here.
+   room-geometry.js — Non-AI Mode preset geometry.
+   Coordinates are in the sample room's natural image pixels.
    ============================================================ */
 
 const ROOM_GEOMETRY = {
-  'living-room': {
-    imageSize: { width: 1024, height: 1024 },
-    wall:  { corners: [[0, 0],   [1024, 0],   [1024, 610], [0, 610]] },
-    floor: { corners: [[0, 619], [1024, 619], [1024, 930], [0, 930]] }
-  },
-  'bathroom': {
-    imageSize: { width: 1024, height: 1024 },
-    wall:  { corners: [[0, 0],   [1024, 0],   [1024, 610], [0, 610]] },
-    floor: { corners: [[0, 619], [1024, 619], [1024, 930], [0, 930]] }
-  },
-  'bedroom': {
-    imageSize: { width: 1024, height: 1024 },
-    wall:  { corners: [[0, 0],   [1024, 0],   [1024, 610], [0, 610]] },
-    floor: { corners: [[0, 619], [1024, 619], [1024, 930], [0, 930]] }
+  'sample-living-room': {
+    imageSize: { width: 2048, height: 1365 },
+    // Four anchor corners define the perspective plane. Additional points
+    // trace around visible furniture so the preset remains a useful demo.
+    floor: {
+      points: [
+        [690, 770],
+        [1450, 770],
+        [2018, 1360],
+        [80, 1360],
+        [505, 1075, 3],
+        [260, 880, 3]
+      ],
+      // Explicit perspective plane for the sample room. The four anchors
+      // are kept separate from the mask-only points above so the preset
+      // behaves exactly like an uploaded room.
+      plane: [
+        [690, 770],
+        [1450, 770],
+        [2018, 1360],
+        [80, 1360]
+      ]
+    },
+    wall: {
+      points: [
+        [0, 0],
+        [2048, 0],
+        [1450, 770],
+        [690, 770]
+      ]
+    }
   }
 };
